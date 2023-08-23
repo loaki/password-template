@@ -19,7 +19,7 @@
 
         <script>
             $(document).ready(function () {
-                $.get("https://loaki.github.io/<password_hash>/notes.txt", function (data) {
+                $.get("https://<username>.github.io/<password_hash>/notes.txt", function (data) {
                     document.getElementById("notes").innerHTML = data;
                 })
             })
