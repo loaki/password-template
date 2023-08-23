@@ -1,0 +1,9 @@
+{
+    "github": [
+        {
+            "token": "<github_token_hash>"
+        }
+    ],
+    "passwords": [
+    ]
+}

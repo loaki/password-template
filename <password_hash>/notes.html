@@ -1,0 +1,28 @@
+<html lang="en">
+  
+<head>
+    <meta charset="UTF-8">
+    <title>NOTES</title>
+
+    <!-- INCLUDING JQUERY-->
+    <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
+    
+</head>
+<body>
+    <section>
+        <h1>
+            <a href="index.html" class="button">PSSWDS</a>
+            NOTES
+        </h1>
+
+        <p id="notes" style="white-space: pre-line"></p>
+
+        <script>
+            $(document).ready(function () {
+                $.get("https://loaki.github.io/<password_hash>/notes.txt", function (data) {
+                    document.getElementById("notes").innerHTML = data;
+                })
+            })
+        </script>
+    </section>
+</body>

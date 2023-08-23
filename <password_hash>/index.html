@@ -1,0 +1,201 @@
+<html lang="en">
+  
+<head>
+    <meta charset="UTF-8">
+    <title>PSSWDS</title>
+
+    <!-- INCLUDING JQUERY-->
+    <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
+    
+    <!-- CRYPTO JS-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.2/rollups/aes.js" integrity="sha256-/H4YS+7aYb9kJ5OKhFYPUjSJdrtV6AeyJOtTkw6X72o=" crossorigin="anonymous"></script>
+  
+    <!-- CSS FOR STYLING THE PAGE -->
+    <style>
+    #psswds {
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 16px;
+        border-collapse: collapse;
+    }
+
+    #psswds td, #psswds th {
+        border: 1px solid #ddd;
+        padding: 8px;
+    }
+      
+    #psswds tr:nth-child(even){background-color: #f2f2f2;}
+      
+    #psswds tr:hover {background-color: #ddd;}
+      
+    #psswds th {
+        padding-top: 12px;
+        padding-bottom: 12px;
+        text-align: left;
+        background-color: #04AA6D;
+        color: white;
+    }
+
+    .update__alert {
+        display: none;
+        border-bottom: 1px solid transparent;
+        border-radius: 3px 3px 0 0;
+        padding: 12px 14px;
+        background-color: #ddd;
+    }
+    </style>
+</head>
+  
+<body>
+    <section>
+        <div class="update__alert" data-id="append">Password added</div>
+        <div class="update__alert" data-id="remove">Password removed</div>
+        <div class="update__alert" data-id="hash">Invalid hash</div>
+
+        <h1>
+            PSSWDS
+            <a href="notes.html" class="button">NOTES</a>
+        </h1>
+
+        <label>Github token: </label>
+        <div id="github_token"></div>
+        <br>
+
+        <input type="password" id="hash" placeholder="hash">
+        <input type="submit" value="decrypt" onclick="decrypt()">
+        <br>
+
+        <input type="text" id="append_name" placeholder="name">
+        <input type="text" id="append_id" placeholder="id">
+        <input type="text" id="append_pw" placeholder="password">
+        <input type="submit" value="Add" onclick="submit('append')">
+
+        <!-- TABLE CONSTRUCTION-->
+        <table id='psswds'>
+            <!-- HEADING FORMATION -->
+            <tr>
+                <th>Name</th>
+                <th>Id</th>
+                <th>Password</th>
+            </tr>
+
+            <script>
+                function submit(type) {
+                    var hash = document.getElementById("hash").value;
+                    if (hash == '') {
+                        var alerts = document.querySelectorAll('.update__alert');
+                        for (var i = 0; i < alerts.length; i++) {
+                            alerts[i].style.display = "none";
+                        }
+                        document.querySelectorAll('[data-id="hash"]')[0].style.display = 'block';
+                        return
+                    }
+                    var encrypted_name = CryptoJS.AES.encrypt(document.getElementById('append_name').value, hash).toString();
+                    var encrypted_id = CryptoJS.AES.encrypt(document.getElementById('append_id').value, hash).toString();
+                    var encrypted_pw = CryptoJS.AES.encrypt(document.getElementById('append_pw').value, hash).toString();
+                    var xhr = new XMLHttpRequest();
+                    xhr.onreadystatechange = function() {
+                        if (this.readyState == 4) {
+                            for (var i = 0; i < alerts.length; i++) {
+                                alerts[i].style.display = "none";
+                            }
+                            if (this.status != 401) {
+                                document.querySelectorAll('[data-id="'+ fct +'"]')[0].style.display = 'block';
+                            }
+                            else {
+                                document.querySelectorAll('[data-id="hash"]')[0].style.display = 'block';
+                            }
+                        }
+                    }
+                    if (type === 'append') {
+                        var fct = 'append'
+                        var params='{"event_type":"append",\
+                            "client_payload":{\
+                            "unit":false,\
+                            "integration":true,\
+                            "message": "append' +' '+ encrypted_name +' '+ encrypted_id +' '+ encrypted_pw +'"}}'
+                    }
+                    else {
+                        var fct = 'remove'
+                        var params='{"event_type":"remove",\
+                            "client_payload":{\
+                            "unit":false,\
+                            "integration":true,\
+                            "message": "remove'+ ' ' + type.currentTarget.param+ '"}}'
+                    }
+                    token = document.getElementById("github_token").innerHTML
+                    xhr.open('post', 'https://api.github.com/repos/<username>/<username>.github.io/dispatches', true);
+                    xhr.setRequestHeader('Accept', 'application/vnd.github+json');
+                    xhr.setRequestHeader('Authorization', 'Bearer '+token);
+                    xhr.send(params, true);
+                    var alerts = document.querySelectorAll('.update__alert');
+                    for (var i = 0; i < alerts.length; i++) {
+                        alerts[i].style.display = "none";
+                    }
+                    document.querySelectorAll('[data-id="'+ fct +'"]')[0].style.display = 'block';
+                }   
+
+                function decrypt() {
+                    var hash = document.getElementById("hash").value;
+                    var token = document.getElementById("github_token").innerHTML
+                    var decrypted = CryptoJS.AES.decrypt(token, hash);
+                    document.getElementById("github_token").innerHTML = decrypted.toString(CryptoJS.enc.Utf8);
+                  
+                    var table = document.getElementById("psswds");
+                    for (var i = 1, row; row = table.rows[i]; i++) {
+                        for (var j = 0, col; col = row.cells[j]; j++) {
+                            if (row.cells[j].className != 'submit') {
+                                var text = row.cells[j].innerHTML
+                                var decrypted = CryptoJS.AES.decrypt(text, hash);
+                                row.cells[j].innerHTML = decrypted.toString(CryptoJS.enc.Utf8)
+                            }
+                        }  
+                    }
+                }
+
+                $(document).ready(function () {
+                    // FETCHING DATA FROM JSON FILE
+                    // $.getJSON("data.json", 
+                    $.getJSON("https://loaki.github.io/<password_hash>/data.json", 
+                        function (data) {
+  
+                        document.getElementById("github_token").innerHTML =data.github[0].token;
+                      
+                        // ITERATING THROUGH OBJECTS
+                        $.each(data.passwords, function (key, value) {
+                            //CONSTRUCTION OF ROWS HAVING
+                            var row = document.createElement("tr");
+
+                            var cell_name = document.createElement("td");
+                            var cellText_name = document.createTextNode(value.name);
+                            cell_name.appendChild(cellText_name);
+                            row.appendChild(cell_name);
+
+                            var cell_id = document.createElement("td");
+                            var cellText_id = document.createTextNode(value.id);
+                            cell_id.appendChild(cellText_id);
+                            row.appendChild(cell_id);
+
+                            var cell_pw = document.createElement("td");
+                            var cellText_pw = document.createTextNode(value.pw);
+                            cell_pw.appendChild(cellText_pw);
+                            row.appendChild(cell_pw);
+
+                            var cell_rm = document.createElement("td");
+                            var input_rm = document.createElement("input")
+                            input_rm.type = "submit";
+                            input_rm.value = "x";
+                            input_rm.param = value.name + value.id;
+                            input_rm.addEventListener("click", submit);
+                            cell_rm.appendChild(input_rm);
+                            cell_rm.classList.add("submit")
+                            row.appendChild(cell_rm);
+
+                            $('#psswds').append(row);
+                        });
+                    });  
+                });
+            </script>
+    </section>
+</body>
+  
+</html>
