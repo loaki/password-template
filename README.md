@@ -10,7 +10,7 @@ https://emn178.github.io/online-tools/sha1.html
 
 ### data
 
-all data are stored with AES encryption
+all data are stored with AES encryption (do not use the same key as index password)
 
 rename the \<github_token_hash\> after your hashed github token
 
